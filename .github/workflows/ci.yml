@@ -12,3 +12,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test:coverage
+      - name: E2E com PostgreSQL isolado
+        run: docker compose -p geracaotech-e2e -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from tests
+      - name: Encerrar ambiente E2E
+        if: always()
+        run: docker compose -p geracaotech-e2e -f docker-compose.test.yml down -v

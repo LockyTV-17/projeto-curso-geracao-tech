@@ -19,7 +19,7 @@ export function createApp(taskService, logger) {
   });
   app.patch('/tasks/:id/complete', async (req, res, next) => {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
+    if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: 'ID inválido.' });
     try { res.json(await taskService.complete(id)); } catch (error) { next(error); }
   });
   app.use((error, _req, res, _next) => {

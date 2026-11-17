@@ -11,5 +11,9 @@ export default [
   {
     files: ['tests/smoke.js'],
     languageOptions: { globals: { __ENV: 'readonly' } }
+  },
+  {
+    files: ['tests/e2e/**/*.js'],
+    languageOptions: { globals: { fetch: 'readonly' } }
   }
 ];

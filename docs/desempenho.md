@@ -2,15 +2,33 @@
 
 ## Plano e medição
 
-Executado localmente com Docker Compose ativo, usando k6 em contêiner e o script `tests/smoke.js`. O script fez uma chamada ao endpoint `/health`.
+Última execução: 17/11/2026, localmente em Windows com Docker Desktop, API Node.js 22 e PostgreSQL 16 no Docker Compose. O k6 executou em contêiner contra `host.docker.internal:3000`. O banco tinha 1 tarefa durante a medição.
 
-Resultado observado: 1 requisição, check `health responde 200` aprovado, 0% de falhas, duração média de 13,3 ms e p95 de 13,3 ms. Como foi apenas uma iteração, esta medição confirma o smoke test, mas não é um benchmark representativo nem comprova o SLO sob carga.
+Carga: 1 usuário virtual por 10 segundos, GET `/health` e GET `/tasks` por iteração, com pausa de 200 ms. Nenhuma gravação é feita pelo script.
 
-Para uma medição representativa, aumentar duração e usuários virtuais e registrar a nova saída do terminal aqui.
+| Indicador | Resultado |
+|---|---|
+| Iterações | 49 |
+| Requisições | 98 (49 por endpoint) |
+| Checks | 147 aprovados, nenhuma falha |
+| Falhas HTTP | 0% |
+| p95 geral | 2,20 ms (arredondado) |
+| p95 de GET `/tasks` | 2,27 ms (arredondado) |
+| Média de GET `/tasks` | 2,03 ms (arredondado) |
+
+O resumo bruto está em [`k6-summary.json`](k6-summary.json). Os limites `checks: rate==1`, `http_req_failed: rate==0` e p95 de `/tasks` abaixo de 300 ms passaram; k6 encerrou com código 0.
+
+Com a API ativa, reproduzir da raiz do projeto no PowerShell:
+
+```powershell
+docker run --rm -v "$($PWD.Path):/scripts:ro" -v "$($PWD.Path)/docs:/results" -w /scripts grafana/k6 run --summary-export /results/k6-summary.json -e BASE_URL=http://host.docker.internal:3000 tests/smoke.js
+```
+
+Uma execução inicial anterior fez apenas 1 chamada a `/health`, com p95 de 13,3 ms. Como o cenário mudou, ela não serve como comparação de melhoria de desempenho.
 
 ## SLO
 
-Objetivo inicial: 95% das respostas do fluxo de leitura concluídas em até 300 ms, medido em execução local com carga definida. Esse alvo ainda precisa ser validado com uma amostra maior antes da apresentação.
+Objetivo inicial: 95% das respostas de GET `/tasks` concluídas em até 300 ms, na janela de execução local definida acima. O alvo foi atendido nesta amostra. O limite automatizado é estrito (`p(95)<300`). O resultado não garante esse desempenho com muitos usuários, maior volume de dados ou em produção.
 
 ## Observabilidade
 

@@ -50,7 +50,7 @@ O contrato das rotas está em [`docs/openapi.yaml`](docs/openapi.yaml).
 
 ## Como iniciar
 
-Requisito: Docker Desktop em execução. Na pasta do projeto, rode:
+Requisito: Docker Desktop em execução. Para os testes locais, use Node.js 22.12+ ou 24 e npm. Na pasta do projeto, rode:
 
 ```powershell
 docker compose up --build
@@ -80,26 +80,43 @@ npm run lint
 npm run test:coverage
 ```
 
-Resultados já observados localmente: lint sem erros; 6 testes passaram; cobertura de 90,47%, acima do mínimo declarado de 70%.
+Resultados verificados: lint sem erros; 33 testes unitários e de integração passaram; cobertura de 100% do domínio (linhas, funções, branches e statements), acima do mínimo declarado de 70%. A cobertura está limitada a `src/domain/**/*.js` e não representa toda a aplicação.
 
-O smoke test k6 faz uma requisição ao endpoint `/health`. Com o Docker Compose ainda ativo, ele pode ser executado em um contêiner Docker:
+Para executar os 3 testes de ponta a ponta com HTTP e PostgreSQL reais em um ambiente isolado, use:
+
+```powershell
+docker compose -p geracaotech-e2e -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from tests
+```
+
+Ao terminar, remova somente o ambiente de testes:
+
+```powershell
+docker compose -p geracaotech-e2e -f docker-compose.test.yml down -v
+```
+
+Os 3 testes E2E passaram. O banco de testes não publica portas e é separado do banco da aplicação. Casos, resultados e limites da verificação estão em [`docs/testes.md`](docs/testes.md). O workflow do CI também foi configurado para executar o E2E; a execução remota ainda depende da resolução do bloqueio da conta no GitHub.
+
+O smoke test k6 executa por 10 segundos com 1 usuário virtual, verificando `/health` e `/tasks`, com pausa de 200 ms entre iterações. Com o Docker Compose ainda ativo, execute:
 
 ```powershell
 docker run --rm -v "$($PWD.Path):/scripts" -w /scripts grafana/k6 run -e BASE_URL=http://host.docker.internal:3000 tests/smoke.js
 ```
 
-Resultado observado: 1 requisição, check de saúde aprovado, 0% de falhas e p95 de 13,3 ms. Como foi uma única iteração, esse resultado confirma apenas o smoke test; não é um benchmark representativo.
+Último resultado observado: 98 requisições, 147 verificações aprovadas, 0% de falhas e p95 de 2,27 ms para `/tasks`. O script reprova se houver falha HTTP, check inválido ou p95 de leitura acima do limite configurado de 300 ms. Consulte as condições e o resumo bruto em [`docs/desempenho.md`](docs/desempenho.md) e [`docs/k6-summary.json`](docs/k6-summary.json).
 
 ## Arquitetura, operação e desempenho
 
 - A decisão de usar PostgreSQL e separar domínio e persistência está registrada em [`docs/adr/0001-decisao.md`](docs/adr/0001-decisao.md); a alternativa em memória foi descartada.
-- O plano de medição, SLO e resultado do smoke test estão em [`docs/desempenho.md`](docs/desempenho.md). O SLO inicial é p95 de até 300 ms para leitura; ainda precisa ser avaliado com uma amostra de carga maior.
+- O SLO inicial é responder 95% das leituras em até 300 ms na janela de medição local. Ele foi atendido no smoke test descrito em [`docs/desempenho.md`](docs/desempenho.md); cargas maiores e produção exigem nova validação.
 - Os logs estruturados registram método, rota, status e duração da requisição. A rota `/metrics` expõe a métrica simples `api_up 1`.
 - As variáveis de ambiente de exemplo estão em [`.env.example`](.env.example). Não coloque credenciais reais no repositório.
 
 ## Entrega e apresentação
 
 - Formato: individual. O contribuidor está registrado em [`CONTRIBUTORS.md`](CONTRIBUTORS.md).
-- Repositório: publicar este projeto e inserir aqui o link da execução verde do CI antes de enviar a atividade.
+- Repositório: [LockyTV-17/projeto-curso-geracao-tech](https://github.com/LockyTV-17/projeto-curso-geracao-tech).
+- CI: [execuções do GitHub Actions](https://github.com/LockyTV-17/projeto-curso-geracao-tech/actions). A última execução consultada foi bloqueada por cobrança na conta; ainda falta obter e entregar o link de uma execução aprovada.
 - Apresentação: vídeo para envio pelo Moodle; consulte [`docs/roteiro-video.md`](docs/roteiro-video.md).
 - Entrega: enviar pelo Moodle o link do repositório, este README, `docs/desempenho.md` e `CONTRIBUTORS.md`, conforme as instruções da atividade.
+
+As credenciais `tarefas` do Compose são exemplos para o ambiente local didático. Não reutilize esses valores em um ambiente público. `.env` está ignorado pelo Git; `.env.example` contém apenas exemplos. O Compose já fornece as variáveis necessárias à API, sem exigir configuração manual para a demonstração.

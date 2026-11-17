@@ -12,7 +12,17 @@ Roteiro de até 10 minutos conforme a proposta do curso. Grave a tela e explique
 2. Abra `/health` e mostre `status: ok`.
 3. Crie uma tarefa pelo PowerShell com `Invoke-RestMethod`.
 4. Abra `/tasks` e mostre a tarefa criada.
-5. Marque-a como concluída com `PATCH /tasks/1/complete` e atualize `/tasks` para mostrar `done: true`.
+5. Marque-a como concluída com `PATCH /tasks/{id}/complete`, usando o ID retornado na criação, e atualize `/tasks` para mostrar `done: true`.
+
+Para a gravação, abra outro PowerShell na pasta do projeto e execute uma linha por vez:
+
+```powershell
+$tarefaVideo = Invoke-RestMethod -Method Post -Uri "http://localhost:3000/tasks" -ContentType "application/json" -Body '{"title":"Demonstrar o Projeto B"}'
+$tarefaVideo
+Invoke-RestMethod -Uri "http://localhost:3000/tasks"
+Invoke-RestMethod -Method Patch -Uri "http://localhost:3000/tasks/$($tarefaVideo.id)/complete"
+Invoke-RestMethod -Uri "http://localhost:3000/tasks"
+```
 
 ## 3 minutos — Decisão técnica
 
@@ -20,7 +30,11 @@ Abra `docs/adr/0001-decisao.md`. Explique que escolheu PostgreSQL para persistir
 
 ## 3 minutos — Evidências e próximos passos
 
-Mostre os resultados reais de `npm run lint`, `npm run test:coverage`, o CI e o smoke test k6, caso já tenham sido executados. Em `docs/desempenho.md`, informe o que foi medido e as condições do teste. Não apresente o SLO como comprovado se ainda não tiver medição suficiente. Termine dizendo o que melhoraria, como adicionar paginação à listagem ou repetir o teste k6 com mais usuários e duração.
+Mostre `npm run lint`, `npm run test:coverage` e o E2E conforme os comandos do README. Os resultados verificados foram 33 testes unitários/de integração, 3 E2E e 100% de cobertura do domínio. Explique que essa cobertura não inclui a aplicação inteira.
+
+Mostre `docs/desempenho.md`: smoke de 10 segundos, 1 usuário virtual, 98 requisições, 0% de falhas e p95 de 2,27 ms em `/tasks`. O SLO foi atendido nessa amostra local com 1 tarefa no banco; isso não comprova o desempenho em produção. Termine explicando que adicionaria paginação e repetiria a medição com mais dados e usuários.
+
+Mostre uma execução verde do CI se o bloqueio da conta já tiver sido resolvido. Se ainda houver bloqueio, explique o estado real e apresente os resultados locais, sem chamar o CI de aprovado.
 
 ## Antes de enviar
 

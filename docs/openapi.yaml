@@ -11,12 +11,27 @@ paths:
       responses:
         '200':
           description: API disponível
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
   /tasks:
     get:
       summary: Lista tarefas
       responses:
         '200':
           description: Lista retornada
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
     post:
       summary: Cria uma tarefa
       requestBody:
@@ -34,8 +49,16 @@ paths:
       responses:
         '201':
           description: Tarefa criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
         '400':
           description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /tasks/{id}/complete:
     patch:
       summary: Marca tarefa como concluída
@@ -45,8 +68,62 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
+            maximum: 9007199254740991
       responses:
         '200':
           description: Tarefa concluída
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Tarefa não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /metrics:
+    get:
+      summary: Métrica simples de disponibilidade do processo
+      responses:
+        '200':
+          description: Métrica api_up com valor 1
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    Task:
+      type: object
+      required: [id, title, done, created_at]
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9]+$'
+          description: O driver PostgreSQL retorna BIGINT como string.
+          example: '1'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Estudar para o projeto
+        done:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
