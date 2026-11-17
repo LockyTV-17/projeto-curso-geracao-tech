@@ -1,4 +1,4 @@
-# Nível escolhido: Projeto B — API de tarefas
+# Nível escolhido: Projeto B — Projeto Curso Geração Tech (API de tarefas)
 
 Projeto individual desenvolvido para o curso **Geração Tech**. A aplicação é uma API de domínio único para organizar tarefas, feita para demonstrar um fluxo funcional de ponta a ponta.
 
